@@ -1,0 +1,80 @@
+#!/bin/bash
+
+set -euxo pipefail
+
+
+### validate and set defaults for variables ###
+
+if [[ ! -v DAVICAL_DB_HOST && ! -v POSTGRES_PORT_5432_TCP_ADDR ]]; then
+    echo "Error: Both DAVICAL_DB_HOST and POSTGRES_PORT_5432_TCP_ADDR are unset, terminating."
+    exit 1
+fi
+if [[ ! -v DAVICAL_DB_PORT && ! -v POSTGRES_PORT_5432_TCP_PORT ]]; then
+    echo "Error: Both DAVICAL_DB_PORT and POSTGRES_PORT_5432_TCP_PORT are unset, terminating."
+    exit 1
+fi
+if [[ ! -v DAVICAL_DB_PASSWORD ]]; then
+    echo "Error: DAVICAL_DB_PASSWORD is unset, terminating."
+    exit 1
+fi
+if [[ ! -v DAVICAL_DBA_PASSWORD ]]; then
+    echo "Error: DAVICAL_DBA_PASSWORD is unset, terminating."
+    exit 1
+fi
+
+export DAVICAL_DB_HOST=${DAVICAL_DB_HOST:-$POSTGRES_PORT_5432_TCP_ADDR}
+export DAVICAL_DB_NAME=${DAVICAL_DB_NAME:-davical}
+export DAVICAL_DB_PORT=${DAVICAL_DB_PORT:-$POSTGRES_PORT_5432_TCP_PORT}
+export DAVICAL_DB_USER=${DAVICAL_DB_USER:-davical_app}
+export DAVICAL_DBA_USER=${DAVICAL_DBA_USER:-davical_dba}
+
+
+### functions to connect to DB as admin or the application ###
+
+function dba_psql() {
+    PGPASSWORD="$DAVICAL_DBA_PASSWORD" psql -w -U "$DAVICAL_DBA_USER" -h "$DAVICAL_DB_HOST" -p "$DAVICAL_DB_PORT" "$@" "$DAVICAL_DB_NAME"
+}
+
+function app_psql() {
+    PGPASSWORD="$DAVICAL_DB_PASSWORD" psql -w -U "$DAVICAL_DB_USER" -h "$DAVICAL_DB_HOST" -p "$DAVICAL_DB_PORT" "$@" "$DAVICAL_DB_NAME"
+}
+
+
+### assert DB connection works ###
+
+if ! dba_psql -c 'select 0;'; then
+    echo "Failed to connect to the database as DBA, terminating."
+    exit 1
+fi
+if ! app_psql -c 'select 0;'; then
+    echo "Failed to connect to the database as application, terminating."
+    exit 1
+fi
+
+
+### create davical config if not present ###
+
+if [ ! -e /etc/davical/config.php ]; then
+    envsubst \
+        '$DAVICAL_DB_NAME $DAVICAL_DB_PORT $DAVICAL_DB_HOST $DAVICAL_DB_USER $DAVICAL_DB_PASSWORD' \
+        < /etc/davical/config.source.php > /etc/davical/config.php
+fi
+
+
+### initialize davical database if not initialized, otherwise ensure latest DB migration ###
+
+if ! dba_psql -P pager=off -c '\dt' | grep 'calendar_item'; then
+    dba_psql -qXAt < /var/www/html/awl/dba/awl-tables.sql
+    dba_psql -qXAt < /var/www/html/awl/dba/schema-management.sql
+    dba_psql -qXAt < /var/www/html/davical/dba/davical.sql
+    /var/www/html/davical/dba/update-davical-database --dbname "$DAVICAL_DB_NAME" --dbuser "$DAVICAL_DBA_USER" --dbhost "$DAVICAL_DB_HOST" --dbpass "$DAVICAL_DBA_PASSWORD" --appuser "$DAVICAL_DB_USER" --owner "$DAVICAL_DBA_USER" --nopatch
+    dba_psql -qXAt < /var/www/html/davical/dba/base-data.sql
+    dba_psql -qX -c "UPDATE usr SET password = '**$DAVICAL_ADMIN_PASSWORD' WHERE user_no = 1;"
+else
+    /var/www/html/davical/dba/update-davical-database --dbname "$DAVICAL_DB_NAME" --dbuser "$DAVICAL_DBA_USER" --dbhost "$DAVICAL_DB_HOST" --dbpass "$DAVICAL_DBA_PASSWORD" --appuser "$DAVICAL_DB_USER" --owner "$DAVICAL_DBA_USER"
+fi
+
+
+### replace the shell with an apache process ###
+
+exec httpd -DFOREGROUND
