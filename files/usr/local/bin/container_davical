@@ -61,6 +61,13 @@ if [ ! -e /etc/davical/config.php ]; then
 fi
 
 
+### create htpasswd file if not present ###
+
+if [ ! -e /etc/davical/htpasswd ]; then
+    echo "${DAVICAL_HTPASSWD:-}" > /etc/davical/htpasswd
+fi
+
+
 ### initialize davical database if not initialized, otherwise ensure latest DB migration ###
 
 if ! dba_psql -P pager=off -c '\dt' | grep 'calendar_item'; then

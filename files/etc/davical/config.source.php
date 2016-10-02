@@ -3,4 +3,7 @@ $c->pg_connect[] = array( 'dsn' => 'pgsql:dbname=$DAVICAL_DB_NAME port=$DAVICAL_
 
 $c->admin_email ='noreply@example.com';
 $c->restrict_setup_to_admin = true;
+
+$c->authenticate_hook['server_auth_type'] = 'Basic';
+include_once('AuthPlugins.php');
 ?>
