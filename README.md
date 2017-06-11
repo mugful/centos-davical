@@ -1,5 +1,5 @@
-centos-postgres
-===============
+centos-davical
+==============
 
 A DAViCal image built on top of CentOS 7.
 
