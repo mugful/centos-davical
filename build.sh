@@ -2,8 +2,8 @@
 
 set -euxo pipefail
 
-AWL_REF=r0.57
-DAVICAL_REF=r1.1.5
+AWL_REF=r0.59
+DAVICAL_REF=r1.1.7
 
 # CentOS image comes cleaned of locales, reinstall them
 yum -y reinstall glibc-common
