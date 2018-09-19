@@ -3,12 +3,18 @@ centos-davical
 
 A DAViCal image built on top of CentOS 7.
 
-Build
------
+Pull
+----
 
-    git clone https://github.com/dockingbay/centos-davical
+Either pull from Quay.io:
+
+    docker pull quay.io/mugful/centos-davical:master
+
+Or build your own:
+
+    git clone https://github.com/mugful/centos-davical
     cd centos-davical
-    docker build --force-rm -t dockingbay/centos-davical:latest .
+    docker build --force-rm -t mugful/centos-davical:master .
 
 Run
 ---
@@ -18,7 +24,7 @@ exported. However, DAViCal saves its state in a Postgres database, so
 you'll need to link the DAViCal container to a Postgres one.
 
 The database and accounts need to be created before starting the
-DAViCal container. If you're running dockingbay's centos-postgres, you
+DAViCal container. If you're running mugful's centos-postgres, you
 can create them like so:
 
     # assuming the container name is 'postgres'
@@ -46,4 +52,4 @@ created (= web UI admin password, not DB admin password):
         -e DAVICAL_DBA_PASSWORD='dba_password' \
         -e DAVICAL_ADMIN_PASSWORD='admin_password' \
         -p 8080:80 \
-        dockingbay/centos-davical:latest
+        quay.io/mugful/centos-davical:master
