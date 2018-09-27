@@ -52,9 +52,9 @@ if ! app_psql -c 'select 0;'; then
 fi
 
 
-### create davical config if not present ###
+### create davical config if not present or if recreation on restart requested ###
 
-if [ ! -e /etc/davical/config.php ]; then
+if [ ! -e /etc/davical/config.php -o -n "${DAVICAL_RECREATE_CONFIG_ON_RESTART:-}" ]; then
     envsubst \
         '$DAVICAL_DB_NAME $DAVICAL_DB_PORT $DAVICAL_DB_HOST $DAVICAL_DB_USER $DAVICAL_DB_PASSWORD' \
         < /etc/davical/config.source.php > /etc/davical/config.php

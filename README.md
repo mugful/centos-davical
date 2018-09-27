@@ -53,3 +53,10 @@ created (= web UI admin password, not DB admin password):
         -e DAVICAL_ADMIN_PASSWORD='admin_password' \
         -p 8080:80 \
         quay.io/mugful/centos-davical:master
+
+If you want to ensure that DAViCal's configuration is regenerated each
+time the container starts (e.g. to adapt for a potentially changing IP
+address of the PostgreSQL container), provide also this environment
+variable:
+
+        -e DAVICAL_RECREATE_CONFIG_ON_RESTART=true \
