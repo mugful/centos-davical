@@ -10,7 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-FROM centos:centos7
+FROM quay.io/centos/centos:7
 MAINTAINER Jiri Stransky <jistr@jistr.com>
 
 RUN yum clean expire-cache && yum -y update && yum clean all
