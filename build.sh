@@ -5,6 +5,7 @@ set -euxo pipefail
 AWL_REF=r0.63
 DAVICAL_REF=r1.1.11
 
+dnf -y install 'dnf-command(config-manager)'
 dnf config-manager --set-enabled powertools
 
 # CentOS image comes cleaned of locales, reinstall them
