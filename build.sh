@@ -2,8 +2,8 @@
 
 set -euxo pipefail
 
-AWL_REF=r0.63
-DAVICAL_REF=r1.1.11
+AWL_REF=r0.64
+DAVICAL_REF=r1.1.12
 
 dnf -y install 'dnf-command(config-manager)'
 dnf config-manager --set-enabled powertools
